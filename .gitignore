@@ -8,3 +8,4 @@ img.jpg
 *python-version
 *__pycache__
 *yolov8n-seg.pt
+*dataset/
