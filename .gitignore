@@ -1,0 +1,8 @@
+.venv
+*modelo_nivel_llenado.h5
+*modelo_nivel_llenado.h5_1
+get-pip.py
+main_resplado.py
+img.jpg
+*.DS_Store
+*python-version
