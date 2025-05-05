@@ -44,4 +44,6 @@ python main.py
 - El modelo de detección MobileNet-SSD fue desarrollado por [Wei Liu et al](https://arxiv.org/abs/1512.02325)
 - El modelo de clasificación fue desarrollado especialmente para este proyecto
 
+## Consideraciones
+En caso de querer entrenar el modelo, deberas modificar la ruta de tus datasets, ademas deberas correr el archivo comprension.py que se encuentra en utils, para evitar tener un archivo muy pesado del modelo entrenado.
 
