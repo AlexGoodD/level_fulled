@@ -6,3 +6,5 @@ main_resplado.py
 img.jpg
 *.DS_Store
 *python-version
+*__pycache__
+*yolov8n-seg.pt
