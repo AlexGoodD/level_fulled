@@ -28,11 +28,14 @@ while True:
     results = modelo_yolo(frame)[0]
     output = procesar_deteccion(frame, results, interpreter, input_details, output_details)
 
+    # Combinar vistas: original y procesada
+    combined_view = cv2.hconcat([frame, output])
+
     fps = 1.0 / (time.time() - start_time)
-    cv2.putText(output, f"FPS: {fps:.1f}", (10, output.shape[0] - 10),
+    cv2.putText(combined_view, f"FPS: {fps:.1f}", (10, combined_view.shape[0] - 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (100, 100, 100), 2)
 
-    cv2.imshow("LevelWater - Botella segmentada", output)
+    cv2.imshow("LevelWater - Vista combinada", combined_view)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
