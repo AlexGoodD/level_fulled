@@ -55,53 +55,58 @@ def create_card(parent, icon, title, desc, btn_text, color, hover_color, command
     return shadow, card
 
 def create_card_view(parent, icon, title, bar_color="#0BADAC"):
-    """Crea una tarjeta con barra superior de color e icono, para vistas como la cámara."""
-    
+    """Crea una tarjeta con barra superior redondeada arriba y plana abajo, compatible con .grid()."""
+
     # --- Sombra detrás ---
     shadow = ctk.CTkFrame(
         parent,
-        width=320,
-        height=260,
+        width=500,
+        height=430,
         corner_radius=20,
         fg_color="#F3F3F3"
     )
     shadow.grid_propagate(False)
     shadow.pack_propagate(False)
-    
+
     # --- Tarjeta principal ---
     card = ctk.CTkFrame(
         parent,
-        width=320,
-        height=260,
+        width=500,
+        height=430,
         corner_radius=20,
         fg_color="white"
     )
     card.grid_propagate(False)
     card.pack_propagate(False)
 
-    # --- Colocar con desplazamiento (igual que create_card) ---
-    shadow.place(x=8, y=8)
-    card.place(x=0, y=0)
-
     # --- Barra superior de color ---
     top_bar = ctk.CTkFrame(
         card,
-        height=40,
+        height=50,
         corner_radius=20,
         fg_color=bar_color
     )
     top_bar.pack(fill="x", side="top")
 
-    # --- Icono + texto en la barra ---
+    # --- El truco: ocultar las esquinas inferiores del top_bar ---
+    # Esto hace que se vea redondeado arriba y plano abajo 👇
+    try:
+        top_bar._canvas.configure(highlightthickness=0)
+        top_bar._canvas.itemconfig(top_bar._corner_items["bottom_left"], state="hidden")
+        top_bar._canvas.itemconfig(top_bar._corner_items["bottom_right"], state="hidden")
+    except Exception:
+        pass  # Evita errores si la implementación interna cambia
+
+    # --- Icono + texto ---
     image = Image.open(icon)
-    image = image.resize((20, 20))
-    ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=(20, 20))
+    image = image.resize((35, 35))  # 🔹 Icono más grande
+    ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=(35, 35))
 
     top_container = ctk.CTkFrame(top_bar, fg_color="transparent")
-    top_container.pack(side="left", padx=15, pady=5)
+    top_container.pack(side="left", padx=15, pady=8)
 
     icon_label = ctk.CTkLabel(top_container, image=ctk_image, text="")
-    icon_label.pack(side="left", padx=(0, 6))
+    icon_label.pack(side="left", padx=(0, 8))
 
     title_label = ctk.CTkLabel(
         top_container,
@@ -111,7 +116,7 @@ def create_card_view(parent, icon, title, bar_color="#0BADAC"):
     )
     title_label.pack(side="left")
 
-    # --- Contenedor interno vacío (contenido dinámico) ---
+    # --- Contenedor de contenido dinámico ---
     content_frame = ctk.CTkFrame(
         card,
         fg_color="#D9D9D9",
