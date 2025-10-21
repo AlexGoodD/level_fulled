@@ -1,10 +1,12 @@
 import numpy as np
 import cv2
 from .classifier import clasificar_botella
+import random
 
 def procesar_deteccion(frame, results, interpreter, input_details, output_details):
     output = np.ones_like(frame) * 255
     botella_detectada = False
+    resultado_final = None
 
     for i, box in enumerate(results.boxes):
         cls_id = int(box.cls[0])
@@ -35,13 +37,25 @@ def procesar_deteccion(frame, results, interpreter, input_details, output_detail
                 # Clasificación
                 resultado = clasificar_botella(frame, x1, y1, x2, y2, interpreter, input_details, output_details)
                 if resultado:
-                    etiqueta, porcentaje = resultado
-                    texto = f"{etiqueta.upper()} ({porcentaje:.1f}%)"
-                    cv2.putText(output, texto, (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+                    etiqueta, confianza = resultado  # confianza = fiabilidad del modelo
 
-    if not botella_detectada:
-        cv2.putText(output, "Botella no detectada", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 255), 2)
+                    # --- Rango de llenado estimado según la clase ---
+                    rango_llenado = {
+                        "derramado": (104, 110),
+                        "lleno": (95, 100),
+                        "medio": (45, 55),
+                        "vacio": (0, 10)
+                    }
 
-    return output
+                    # Generar un valor aleatorio dentro del rango
+                    rango = rango_llenado.get(etiqueta, (0, 100))
+                    porcentaje_llenado = random.uniform(*rango)
+
+                    # Guardar ambos valores: nivel estimado y confianza del modelo
+                    resultado_final = (etiqueta, porcentaje_llenado, confianza)
+
+    # if not botella_detectada:
+        # cv2.putText(output, "Botella no detectada", (10, 30),
+                    # cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 255), 2)
+
+    return output, resultado_final

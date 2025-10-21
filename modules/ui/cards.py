@@ -1,6 +1,10 @@
 import customtkinter as ctk
 from PIL import Image
 
+width=500
+height=430
+card_height=260
+    
 def create_card(parent, icon, title, desc, btn_text, color, hover_color, command=None):
     """Crea una tarjeta con ícono, descripción y botón."""
     image = Image.open(icon)
@@ -9,8 +13,8 @@ def create_card(parent, icon, title, desc, btn_text, color, hover_color, command
 
     shadow = ctk.CTkFrame(
         parent,
-        width=320,
-        height=260,
+        width=width,
+        height=card_height,
         corner_radius=20,
         fg_color="#F3F3F3"
     )
@@ -18,8 +22,8 @@ def create_card(parent, icon, title, desc, btn_text, color, hover_color, command
     shadow.pack_propagate(False)
     
     card = ctk.CTkFrame(
-         parent, width=320,
-         height=260,
+         parent, width=width,
+         height=card_height,
          corner_radius=20,
          fg_color="white"
         )
