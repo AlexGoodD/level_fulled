@@ -3,6 +3,13 @@ import cv2
 from .classifier import clasificar_botella
 import random
 
+LABEL_MAP_ES_EN = {
+    "derramado": "SPILLED",
+    "lleno": "FULL",
+    "medio": "HALF",
+    "vacio": "EMPTY"
+}
+
 def procesar_deteccion(frame, results, interpreter, input_details, output_details):
     output = np.ones_like(frame) * 255
     botella_detectada = False
@@ -37,9 +44,9 @@ def procesar_deteccion(frame, results, interpreter, input_details, output_detail
                 # Clasificación
                 resultado = clasificar_botella(frame, x1, y1, x2, y2, interpreter, input_details, output_details)
                 if resultado:
-                    etiqueta, confianza = resultado  # confianza = fiabilidad del modelo
+                    etiqueta_es, confianza = resultado  # etiqueta en ES
 
-                    # --- Rango de llenado estimado según la clase ---
+                    # Rangos estimados por clase (en ES)
                     rango_llenado = {
                         "derramado": (104, 110),
                         "lleno": (95, 100),
@@ -47,15 +54,14 @@ def procesar_deteccion(frame, results, interpreter, input_details, output_detail
                         "vacio": (0, 10)
                     }
 
-                    # Generar un valor aleatorio dentro del rango
-                    rango = rango_llenado.get(etiqueta, (0, 100))
+                    # Valor aleatorio dentro del rango
+                    rango = rango_llenado.get(etiqueta_es, (0, 100))
                     porcentaje_llenado = random.uniform(*rango)
 
-                    # Guardar ambos valores: nivel estimado y confianza del modelo
-                    resultado_final = (etiqueta, porcentaje_llenado, confianza)
+                    # Traducir etiqueta a EN antes de retornar
+                    etiqueta_en = LABEL_MAP_ES_EN.get(etiqueta_es, "UNKNOWN")
 
-    # if not botella_detectada:
-        # cv2.putText(output, "Botella no detectada", (10, 30),
-                    # cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 255), 2)
+                    # Devolver en EN: (label_en, nivel, confianza)
+                    resultado_final = (etiqueta_en, porcentaje_llenado, confianza)
 
     return output, resultado_final

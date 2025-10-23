@@ -20,9 +20,9 @@ def open_realtime_interface():
     subprocess.Popen([sys.executable, "realtime_interface.py"])
     
 def open_image_processing_interface():
-    """Cierra esta ventana y abre la interfaz de Real-Time."""
+    """Cierra esta ventana y abre la interfaz de Image Processing."""
     app.destroy()
-    subprocess.Popen([sys.executable, "realtime_interface.py"])
+    subprocess.Popen([sys.executable, "image_interface.py"])
 
 # --- TOPBAR ---
 create_topbar(app)

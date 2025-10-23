@@ -2,10 +2,11 @@ import cv2
 import time
 from PIL import Image, ImageTk
 import customtkinter as ctk
+from tkinter import filedialog
+import numpy as np
 
-# === MODULOS DE CAMARAS ===
+# === MODULOS DE CAMARAS / MODELOS ===
 from modules.models import cargar_modelo_clasificacion, cargar_modelo_yolo
-from modules.camera_utils import seleccionar_camara
 from modules.detector import procesar_deteccion
 
 # === MODULOS DE UI ===
@@ -28,7 +29,7 @@ app.geometry("1300x800")
 app.configure(fg_color="#FAFAFA")
 
 # --- TOPBAR ---
-create_topbar(app, realtime_mode=True)
+create_topbar(app, image_processing=True)
 
 # ---------- CONTENEDOR PRINCIPAL ----------
 main_frame = ctk.CTkFrame(app, fg_color="transparent")
@@ -37,12 +38,11 @@ main_frame.pack(pady=40)
 # Asegurar columnas uniformes
 main_frame.grid_columnconfigure((0, 1), weight=1, uniform="cards")
 
-
-# --- TARJETA 1: Real-Time Camera View ---
+# --- TARJETA 1: Selector de imagen (antes: cámara) ---
 shadow_view_1, real_view, camera_content = create_card_view(
     main_frame,
     icon="assets/camera_icon.png",
-    title="Camera View",
+    title="Image View",         
     bar_color="#0BADAC"
 )
 shadow_view_1.grid(row=0, column=0, padx=50, pady=0)
@@ -58,8 +58,17 @@ shadow_view_2, ai_view, ai_content = create_card_view(
 shadow_view_2.grid(row=0, column=1, padx=50, pady=0)
 ai_view.grid(row=0, column=1, padx=50, pady=0)
 
-# --- ETIQUETAS PARA MOSTRAR LAS CÁMARAS ---
-camera_label = ctk.CTkLabel(camera_content, text="")
+# --- ETIQUETAS PARA MOSTRAR IMAGENES ---
+camera_label = ctk.CTkLabel(
+    camera_content,
+    text="Haz clic para seleccionar una imagen",
+    width=480,
+    height=360,
+    fg_color="#FFFFFF",
+    corner_radius=12,
+    font=("Lato", 14),
+    text_color="#4A4A4A",
+)
 camera_label.pack(expand=True, fill="both")
 
 ai_label = ctk.CTkLabel(ai_content, text="")
@@ -68,11 +77,8 @@ ai_label.pack(expand=True, fill="both")
 # ---------- SECCIÓN DE ESTADÍSTICAS ----------
 stats_frame = ctk.CTkFrame(app, fg_color="transparent")
 stats_frame.pack(pady=40)
-
-# Asegurar columnas uniformes
 stats_frame.grid_columnconfigure((0, 1, 2), weight=1, uniform="stats")
 
-# --- TARJETA DE ESTADÍSTICA 1 ---
 shadow_s1, stat1, stat1_value_label, stat1_sublabel = create_stat_card_view(
     stats_frame,
     value="0%",
@@ -84,7 +90,6 @@ shadow_s1, stat1, stat1_value_label, stat1_sublabel = create_stat_card_view(
 shadow_s1.grid(row=0, column=0, padx=40)
 stat1.grid(row=0, column=0, padx=40)
 
-# --- TARJETA DE ESTADÍSTICA 2 ---
 shadow_s2, stat2, stat2_value_label, stat2_sublabel = create_stat_card_view(
     stats_frame,
     value="0%",
@@ -96,7 +101,6 @@ shadow_s2, stat2, stat2_value_label, stat2_sublabel = create_stat_card_view(
 shadow_s2.grid(row=0, column=1, padx=40)
 stat2.grid(row=0, column=1, padx=40)
 
-# --- TARJETA DE ESTADÍSTICA 3 ---
 shadow_s3, stat3, stat3_value_label, stat3_sublabel = create_stat_card_view(
     stats_frame,
     value="0FPS",
@@ -108,90 +112,68 @@ shadow_s3, stat3, stat3_value_label, stat3_sublabel = create_stat_card_view(
 shadow_s3.grid(row=0, column=2, padx=40)
 stat3.grid(row=0, column=2, padx=40)
 
-# === CONFIGURACIÓN DE CÁMARA ===
-# Índice de cámara por defecto:
-# 0 = cámara integrada (Mac)
-# 1, 2, etc. = cámaras externas (iPhone, USB, etc.)
-DEFAULT_CAMERA_INDEX = 0  # 👈 fuerza el uso de la cámara interna
-USE_DEFAULT_CAMERA = True  # Cambia a False si quieres usar seleccionar_camara()
-
-# === INICIAR CÁMARA ===
-if USE_DEFAULT_CAMERA:
-    indice = DEFAULT_CAMERA_INDEX
-    print(f"🎥 Usando cámara por defecto (índice {indice})")
-else:
-    indice = seleccionar_camara()
-cap = cv2.VideoCapture(indice)
-if not cap.isOpened():
-    print("❌ No se pudo abrir la cámara.")
-    exit()
-
-# === FUNCIÓN DE ACTUALIZACIÓN DE VIDEO ===
-def update_frames():
-    ret, frame = cap.read()
-    if not ret:
-        app.after(10, update_frames)
+# === NUEVO: Función para cargar imagen ===
+def cargar_imagen(event=None):
+    filepath = filedialog.askopenfilename(
+        title="Seleccionar imagen",
+        filetypes=[("Imagenes", "*.png;*.jpg;*.jpeg;*.bmp"), ("Todos", "*.*")]
+    )
+    if not filepath:
         return
 
-    start_time = time.time()
+    try:
+        img_pil = Image.open(filepath).convert("RGB")
+    except Exception as e:
+        print(f"❌ No se pudo abrir la imagen: {e}")
+        return
 
-    # --- YOLO + procesamiento ---
-    results = modelo_yolo(frame)[0]
-    output, resultado = procesar_deteccion(frame, results, interpreter, input_details, output_details)
-    
-    # === ACTUALIZAR ESTADÍSTICAS ===
+    preview = img_pil.copy()
+    preview.thumbnail((480, 360))
+    img_tk = ctk.CTkImage(light_image=preview, dark_image=preview, size=(480, 360))
+    camera_label.configure(image=img_tk, text="")
+    camera_label.image = img_tk
+
+    frame_rgb = np.array(img_pil)
+    frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+
+    start_time = time.time()
+    results = modelo_yolo(frame_bgr)[0]
+    output, resultado = procesar_deteccion(frame_bgr, results, interpreter, input_details, output_details)
+    elapsed = time.time() - start_time
+
+    output_rgb = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
+    out_pil = Image.fromarray(output_rgb)
+    out_preview = out_pil.copy()
+    out_preview.thumbnail((480, 360))
+    out_tk = ctk.CTkImage(light_image=out_preview, dark_image=out_preview, size=(480, 360))
+    ai_label.configure(image=out_tk, text="")
+    ai_label.image = out_tk
+
     if resultado:
         etiqueta, nivel_llenado, confianza = resultado
-
-        # --- Fill Level ---
         stat1_value_label.configure(text=f"{nivel_llenado:.1f}%")
         stat1_sublabel.configure(text=etiqueta.upper())
-
-        # --- Confidence ---
         if confianza >= 85:
             confianza_label = "HIGH"
         elif confianza >= 60:
             confianza_label = "MEDIUM"
         else:
             confianza_label = "LOW"
-
         stat2_value_label.configure(text=f"{confianza:.1f}%")
         stat2_sublabel.configure(text=confianza_label)
 
-    # --- Mostrar cámara original ---
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    img_pil = Image.fromarray(frame_rgb)
-    img_tk = ctk.CTkImage(light_image=img_pil, dark_image=img_pil, size=(480, 360))
-    camera_label.configure(image=img_tk)
-    camera_label.image = img_tk
-
-    # --- Mostrar vista procesada ---
-    output_rgb = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-    out_pil = Image.fromarray(output_rgb)
-    out_tk = ctk.CTkImage(light_image=out_pil, dark_image=out_pil, size=(480, 360))
-    ai_label.configure(image=out_tk)
-    ai_label.image = out_tk
-
-    # --- Calcular FPS (opcional) ---
-    fps = 1.0 / (time.time() - start_time)
+    fps = 1.0 / elapsed if elapsed > 0 else 0.0
     stat3_value_label.configure(text=f"{int(fps)} FPS")
-
-    # Categoría de velocidad
     if fps > 30:
         stat3_sublabel.configure(text="FAST")
     elif fps > 15:
         stat3_sublabel.configure(text="NORMAL")
     else:
         stat3_sublabel.configure(text="SLOW")
-    # stat3.configure(text=f"{int(fps)} FPS")  # actualiza la tarjeta de rendimiento
 
-    # --- Actualizar cada 30 ms ---
-    app.after(30, update_frames)
+# --- PLACEHOLDER CLICABLE (abre el dialogo) ---
+camera_label.bind("<Button-1>", cargar_imagen)
 
-# === INICIAR LOOP DE VIDEO ===
-update_frames()
+
+# === INICIAR LOOP DE UI ===
 app.mainloop()
-
-# === LIBERAR RECURSOS ===
-cap.release()
-cv2.destroyAllWindows()
