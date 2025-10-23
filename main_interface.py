@@ -15,12 +15,10 @@ app.geometry("1300x800")
 app.configure(fg_color="#FAFAFA")
 
 def open_realtime_interface():
-    """Cierra esta ventana y abre la interfaz de Real-Time."""
     app.destroy()
     subprocess.Popen([sys.executable, "realtime_interface.py"])
     
 def open_image_processing_interface():
-    """Cierra esta ventana y abre la interfaz de Image Processing."""
     app.destroy()
     subprocess.Popen([sys.executable, "image_interface.py"])
 

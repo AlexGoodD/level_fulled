@@ -46,7 +46,6 @@ def procesar_deteccion(frame, results, interpreter, input_details, output_detail
                 if resultado:
                     etiqueta_es, confianza = resultado  # etiqueta en ES
 
-                    # Rangos estimados por clase (en ES)
                     rango_llenado = {
                         "derramado": (104, 110),
                         "lleno": (95, 100),
@@ -54,7 +53,6 @@ def procesar_deteccion(frame, results, interpreter, input_details, output_detail
                         "vacio": (0, 10)
                     }
 
-                    # Valor aleatorio dentro del rango
                     rango = rango_llenado.get(etiqueta_es, (0, 100))
                     porcentaje_llenado = random.uniform(*rango)
 
