@@ -55,7 +55,7 @@ MobileNet-SSD está optimizado para **localización rápida**. Usar un clasifica
 | Clases soportadas | vacío / medio / lleno |
 | Imágenes en dataset de entrenamiento | **750 imágenes** |
 
-> Entrenado y validado con imágenes de recipientes de [describe el contexto: laboratorio / línea de producción / simulado].
+> Entrenado y validado con imágenes de recipientes de agua en condiciones casuales y controladas.
 
 ---
 
