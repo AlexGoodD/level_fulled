@@ -1,49 +1,144 @@
 # LevelFulled
 
-LevelFulled es un proyecto diseñado para detectar objetos y clasificar el nivel de llenado de recipientes utilizando modelos de aprendizaje profundo. Este proyecto combina un modelo de detección basado en MobileNet-SSD y un modelo de clasificación TFLite para realizar estas tareas.
+> Sistema de visión por computadora para **detección y clasificación de niveles de llenado en recipientes industriales** en tiempo real, usando una pipeline de dos etapas: detección con MobileNet-SSD + clasificación con un modelo TFLite entrenado a medida.
 
-## Requisitos
+---
 
-- Python 3.x
-- OpenCV
-- TensorFlow
-- NumPy
+## Problema que resuelve
+
+En líneas de producción industrial, verificar manualmente el nivel de llenado de recipientes es lento, costoso y propenso a errores humanos. Este sistema automatiza esa inspección usando la cámara existente de la línea, **sin hardware adicional**.
+
+---
+
+## Demo
+
+<!-- Editar contenido -->
+![Demo](docs/demo.gif)
+
+| Vacío | Medio | Lleno |
+|:-----:|:-----:|:-----:|
+| ![empty](docs/empty.jpg) | ![half](docs/half.jpg) | ![full](docs/full.jpg) |
+
+---
+
+## Arquitectura
+
+```
+Cámara en tiempo real
+        ↓
+MobileNet-SSD  (detección)
+→ Localiza el recipiente en el frame
+→ Extrae bounding box
+        ↓
+Modelo TFLite custom  (clasificación)
+→ Clasifica nivel: [ vacío | medio | lleno ]
+        ↓
+Output: coordenadas + etiqueta + confianza
+```
+
+### ¿Por qué dos modelos en lugar de uno?
+
+MobileNet-SSD está optimizado para **localización rápida**. Usar un clasificador separado y ligero (TFLite) sobre el ROI detectado permite:
+
+- Mayor precisión en la clasificación sin sacrificar velocidad
+- Re-entrenar solo la clasificación cuando cambia el tipo de recipiente
+- Inferencia eficiente en CPU sin GPU dedicada
+
+---
+
+## Resultados
+
+| Métrica | Valor |
+|---------|-------|
+| Precisión clasificación (test set) | **XX%** |
+| FPS promedio (CPU) | **~XX fps** |
+| Clases soportadas | vacío / medio / lleno |
+| Imágenes en dataset de entrenamiento | **XX imágenes** |
+
+> Entrenado y validado con imágenes de recipientes de [describe el contexto: laboratorio / línea de producción / simulado].
+
+---
+
+## Stack técnico
+
+| Componente | Tecnología |
+|-----------|------------|
+| Detección de objetos | MobileNet-SSD (Caffe) |
+| Clasificación de nivel | TFLite (modelo custom) |
+| Visión por computadora | OpenCV |
+| Runtime | Python 3.x + TensorFlow |
+
+---
 
 ## Instalación
 
-1. Clona este repositorio en tu máquina local.
-2. Instala las dependencias necesarias ejecutando:
-
 ```bash
-   pip install -r requirements.txt
+git clone https://github.com/AlexGoodD/LevelFulled
+cd LevelFulled
+pip install -r requirements.txt
 ```
 
-3. Asegúrate de que los modelos necesarios se encuentren en la carpeta modelos/
+Coloca los modelos preentrenados en `modelos/`:
 
-```bash
-   MobileNetSSD_deploy.caffemodel
-   MobileNetSSD_deploy.prototxt
-   modelo_nivel_llenado.tflite
-   ```
+```
+modelos/
+├── MobileNetSSD_deploy.caffemodel
+├── MobileNetSSD_deploy.prototxt
+└── modelo_nivel_llenado.tflite
+```
+
+---
+
 ## Uso
-1. Ejecuta el archivo principal del proyecto
 
 ```bash
 python main.py
 ```
 
-2. El programa iniciará la cámara y comenzará a detectar objetos y clasificar el nivel de llenado de recipientes (es probable que la primera vez el programa te pida permiso para acceder a la cámara y después se cierre, solo vuelvelo a correr)
+> La primera ejecución puede solicitar permisos de cámara y cerrarse. Vuelve a correrlo después de aceptar el permiso.
+
+---
+
+## Entrenar el modelo de clasificación
+
+1. Prepara tu dataset en la ruta configurada en el script de entrenamiento
+2. Entrena el modelo
+3. Comprime y convierte a TFLite antes de usar:
+
+```bash
+python utils/comprension.py
+```
+
+Esto convierte el modelo a formato TFLite y reduce su tamaño para inferencia eficiente en producción.
+
+---
 
 ## Estructura del proyecto
 
-- main.py: Archivo principal que ejecuta el programa
-- modelos/: Carpeta que contiene los modelos de detección y clasificación.
-- Utils: Scripts auxiliares para tareas como compresión de modelos, y manejo de imágenes.
+```
+LevelFulled/
+├── main.py                  # Entry point — cámara + pipeline completa
+├── modelos/                 # Modelos de detección y clasificación
+│   ├── MobileNetSSD_deploy.caffemodel
+│   ├── MobileNetSSD_deploy.prototxt
+│   └── modelo_nivel_llenado.tflite
+├── utils/
+│   ├── comprension.py       # Conversión y compresión a TFLite
+│   └── image_utils.py       # Utilidades para manejo de imágenes
+├── docs/                    # Assets para README (demo, capturas)
+└── requirements.txt
+```
 
-## Créditos
-- El modelo de detección MobileNet-SSD fue desarrollado por [Wei Liu et al](https://arxiv.org/abs/1512.02325)
-- El modelo de clasificación fue desarrollado especialmente para este proyecto
+---
 
-## Consideraciones
-En caso de querer entrenar el modelo, deberas modificar la ruta de tus datasets, ademas deberas correr el archivo comprension.py que se encuentra en utils, para evitar tener un archivo muy pesado del modelo entrenado.
+## Referencias
 
+- [MobileNet-SSD — Wei Liu et al. (2015)](https://arxiv.org/abs/1512.02325)
+- [TensorFlow Lite — Model Optimization Guide](https://www.tensorflow.org/lite/performance/model_optimization)
+- [OpenCV — Object Detection](https://docs.opencv.org/4.x/d2/d64/tutorial_table_of_content_objdetect.html)
+
+---
+
+## Autor
+
+**Alex** — [@AlexGoodD](https://github.com/AlexGoodD)
