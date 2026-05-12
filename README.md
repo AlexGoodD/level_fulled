@@ -50,10 +50,10 @@ MobileNet-SSD está optimizado para **localización rápida**. Usar un clasifica
 
 | Métrica | Valor |
 |---------|-------|
-| Precisión clasificación (test set) | **XX%** |
-| FPS promedio (CPU) | **~XX fps** |
+| Precisión clasificación (test set) | **76%** |
+| FPS promedio (CPU) | **~15 fps** |
 | Clases soportadas | vacío / medio / lleno |
-| Imágenes en dataset de entrenamiento | **XX imágenes** |
+| Imágenes en dataset de entrenamiento | **750 imágenes** |
 
 > Entrenado y validado con imágenes de recipientes de [describe el contexto: laboratorio / línea de producción / simulado].
 
